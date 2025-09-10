@@ -61,4 +61,5 @@ Tor_value* parse_integer(Tor_parser* parser);
 /* static inline int peek_char(Tor_parser* parser); */
 Tor_value* parse_integer(Tor_parser *parser);
 Tor_value* parse_string(Tor_parser *parser);
+Tor_value* parse_list(Tor_parser *parser);
 #endif

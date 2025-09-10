@@ -34,6 +34,8 @@ Tor_value* Tor_parse_value(Tor_parser* parser){
         case 'i': 
              return parse_integer(parser); 
 
+        case 'l':
+            return parse_list(parser);
         case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9': case '0':
             return parse_string(parser);
@@ -95,8 +97,28 @@ Tor_value* parse_string(Tor_parser *parser){
 
 
 
+Tor_value* parse_list(Tor_parser* parser){
+    if(peek_char(parser) != 'l') return NULL;
 
+    Tor_value* result = malloc(sizeof(Tor_value));
+    result->list.capacity = 100;
+    result->list.count = 0;
+    result->list.elements = NULL;
 
+    while(peek_char(parser) != 'e' && peek_char(parser)!= '\0'){
+        Tor_value** elements = realloc(result->list.elements, result->list.count * sizeof(Tor_value*));
+        Tor_value* elemnt = Tor_parse_value(parser);
+        result->list.elements[result->list.count++] = elemnt;
+        next_char(parser);
+    }
+    return result;
+    
+}
+
+int main(){
+     char *test_list = "l4:spam4:eggse";
+    decode_bencode(test_list, strlen(test_list));
+}
 
 
 
