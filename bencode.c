@@ -92,32 +92,40 @@ Tor_value* parse_string(Tor_parser *parser){
     result->string.length = length;
 
     memcpy((void*)result->string.data, parser->data + parser->pos , length);
+
+    parser->pos += length;
     return result;
 }
 
 
 
 Tor_value* parse_list(Tor_parser* parser){
-    if(peek_char(parser) != 'l') return NULL;
+    char c;
+    if((c = next_char(parser)) != 'l') return NULL;
 
     Tor_value* result = malloc(sizeof(Tor_value));
-    result->list.capacity = 100;
+    result->type = TOR_LIST;
+    result->list.capacity = 0;
     result->list.count = 0;
     result->list.elements = NULL;
+    
+    while((c = peek_char(parser)) != 'e' && c != '\0'){
+        if(result->list.count >= result->list.capacity){
+            size_t new_cap = (result->list.count) ? (result->list.count)*2 : 8 ;
+            Tor_value** new_result = realloc(result->list.elements, new_cap * sizeof(Tor_value*));
+            if(new_result == NULL) return NULL;
+            result->list.capacity = new_cap;
+            result->list.elements = new_result;
+        }
 
-    while(peek_char(parser) != 'e' && peek_char(parser)!= '\0'){
-        Tor_value** elements = realloc(result->list.elements, result->list.count * sizeof(Tor_value*));
-        Tor_value* elemnt = Tor_parse_value(parser);
-        result->list.elements[result->list.count++] = elemnt;
-        next_char(parser);
+        Tor_value* element = Tor_parse_value(parser);
+        result->list.elements[result->list.count++] = element;
+
+        if(peek_char(parser) =='e')
+            next_char(parser);
     }
     return result;
     
-}
-
-int main(){
-     char *test_list = "l4:spam4:eggse";
-    decode_bencode(test_list, strlen(test_list));
 }
 
 
