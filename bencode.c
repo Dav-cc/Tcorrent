@@ -129,6 +129,12 @@ Tor_value* parse_list(Tor_parser* parser){
 }
 
 
+Tor_value* parse_dict(Tor_parser* parser){
+    char c;
+    if(next_char(parser) != 'd') return NULL;
+}
+
+
 
 
 

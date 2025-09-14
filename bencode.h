@@ -37,10 +37,10 @@ struct Tor_value{
 			ssize_t capacity;
 		}list;
 		struct{
-			Tor_dict_entry** entries;
+			Tor_dict_entry* entries;
 			ssize_t count;
 			ssize_t capacity;
-		};
+		}dict;
 	};
 };
 
@@ -62,4 +62,5 @@ Tor_value* parse_integer(Tor_parser* parser);
 Tor_value* parse_integer(Tor_parser *parser);
 Tor_value* parse_string(Tor_parser *parser);
 Tor_value* parse_list(Tor_parser *parser);
+Tor_value* parse_dict(Tor_parser *parser);
 #endif
