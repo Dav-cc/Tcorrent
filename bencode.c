@@ -34,6 +34,8 @@ Tor_value* Tor_parse_value(Tor_parser* parser){
         case 'i': 
              return parse_integer(parser); 
 
+        case 'l':
+            return parse_list(parser);
         case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9': case '0':
             return parse_string(parser);
@@ -90,13 +92,47 @@ Tor_value* parse_string(Tor_parser *parser){
     result->string.length = length;
 
     memcpy((void*)result->string.data, parser->data + parser->pos , length);
+
+    parser->pos += length;
     return result;
 }
 
 
 
+Tor_value* parse_list(Tor_parser* parser){
+    char c;
+    if((c = next_char(parser)) != 'l') return NULL;
+
+    Tor_value* result = malloc(sizeof(Tor_value));
+    result->type = TOR_LIST;
+    result->list.capacity = 0;
+    result->list.count = 0;
+    result->list.elements = NULL;
+    
+    while((c = peek_char(parser)) != 'e' && c != '\0'){
+        if(result->list.count >= result->list.capacity){
+            size_t new_cap = (result->list.count) ? (result->list.count)*2 : 8 ;
+            Tor_value** new_result = realloc(result->list.elements, new_cap * sizeof(Tor_value*));
+            if(new_result == NULL) return NULL;
+            result->list.capacity = new_cap;
+            result->list.elements = new_result;
+        }
+
+        Tor_value* element = Tor_parse_value(parser);
+        result->list.elements[result->list.count++] = element;
+
+        if(peek_char(parser) =='e')
+            next_char(parser);
+    }
+    return result;
+    
+}
 
 
+Tor_value* parse_dict(Tor_parser* parser){
+    char c;
+    if(next_char(parser) != 'd') return NULL;
+}
 
 
 
