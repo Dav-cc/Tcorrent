@@ -39,6 +39,8 @@ Tor_value* Tor_parse_value(Tor_parser* parser){
         case '1': case '2': case '3': case '4': case '5':
         case '6': case '7': case '8': case '9': case '0':
             return parse_string(parser);
+        case 'd' :
+            return parse_dict(parser);
         default :
             return NULL;
     }
@@ -62,8 +64,9 @@ Tor_value* parse_integer(Tor_parser *parser){
         if(!is_digit(c)) return NULL;
         
         value = value * 10 + (c - '0');
-        c = next_char(parser);
+       next_char(parser);
     }
+    next_char(parser);
 
     Tor_value* result = malloc(sizeof(Tor_value));
     result->type = TOR_INT;
@@ -94,6 +97,8 @@ Tor_value* parse_string(Tor_parser *parser){
     memcpy((void*)result->string.data, parser->data + parser->pos , length);
 
     parser->pos += length;
+    printf("[Debug] : %s\n", result->string.data);
+    printf("[Debug] : %ld\n", result->string.length);
     return result;
 }
 
@@ -121,31 +126,72 @@ Tor_value* parse_list(Tor_parser* parser){
         Tor_value* element = Tor_parse_value(parser);
         result->list.elements[result->list.count++] = element;
 
-        if(peek_char(parser) =='e')
-            next_char(parser);
     }
+    if(peek_char(parser) == 'e')
+        next_char(parser);
     return result;
     
 }
 
 
-Tor_value* parse_dict(Tor_parser* parser){
+
+Tor_value* parse_dict(Tor_parser* parser) {
     char c;
-    if(next_char(parser) != 'd') return NULL;
+    if (next_char(parser) != 'd') return NULL;
+
+    Tor_value* result = malloc(sizeof(Tor_value));
+    result->type = TOR_DICT;
+    result->dict.capacity = 0;
+    result->dict.count = 0;
+    result->dict.entries = NULL;
+
+    while ((c = peek_char(parser)) != 'e' && c != '\0') {
+        
+        Tor_value* T_key = parse_string(parser);
+        if (!T_key || T_key->type != TOR_STRING) {
+            free(result);
+            return NULL;
+        }
+
+        char *key = malloc(T_key->string.length + 1);
+        memcpy(key, T_key->string.data, T_key->string.length);
+        key[T_key->string.length] = '\0';  
+
+        Tor_value* T_val = Tor_parse_value(parser);
+        if (!T_val) {
+            free(key);
+            free(result);
+            return NULL;
+        }
+
+        if (result->dict.count >= result->dict.capacity) {
+            size_t new_cap = result->dict.capacity ? result->dict.capacity * 2 : 8;
+            Tor_dict_entry* new_entries =
+                realloc(result->dict.entries, new_cap * sizeof(Tor_dict_entry));
+            if (!new_entries) {
+                free(key);
+                free(result);
+                return NULL;
+            }
+            result->dict.entries = new_entries;
+            result->dict.capacity = new_cap;
+        }
+
+        result->dict.entries[result->dict.count].key = key;
+        result->dict.entries[result->dict.count].value = T_val;
+        result->dict.count++;
+
+        free(T_key);
+        printf("[Debug] : dict key = %s\n", key);
+        if(T_val->type == TOR_DICT) printf("[Debug] : entering nested dict\n");
+        if(T_val->type == TOR_LIST) printf("[Debug] : entering nested list\n");
+    }
+
+    if (peek_char(parser) == 'e') next_char(parser);
+    return result;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+int main(int agrc, char** argv){
+    decode_bencode(argv[1], strlen(argv[1]));
+}
 

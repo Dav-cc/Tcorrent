@@ -18,10 +18,10 @@ typedef enum{
 	TOR_DICT
 }Tor_token;
 
-struct Tor_dict_entry{
+typedef struct Tor_dict_entry{
 	char *key;
 	Tor_value *value; 
-};
+}Tor_dict_entry;
 
 struct Tor_value{
 	Tor_token type;
